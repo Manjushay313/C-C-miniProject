@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Dijkstra Visualizer</title>
+<style>
+  canvas { border:1px solid black; }
+</style>
+</head>
+<body>
+
+<button onclick="run()">Run Dijkstra</button>
+<canvas id="grid" width="600" height="600"></canvas>
+
+<script>
+const n=20;
+const cell=30;
+let grid=Array.from({length:n},()=>Array(n).fill(0));
+let src=null, dest=null, path=[];
+
+const canvas=document.getElementById("grid");
+const ctx=canvas.getContext("2d");
+
+canvas.onclick=(e)=>{
+    let x=Math.floor(e.offsetY/cell);
+    let y=Math.floor(e.offsetX/cell);
+
+    if(!src) src=[x,y];
+    else if(!dest) dest=[x,y];
+    else grid[x][y]=1-grid[x][y];
+
+    draw();
+};
+
+function draw(){
+    ctx.clearRect(0,0,600,600);
+
+    for(let i=0;i<n;i++){
+        for(let j=0;j<n;j++){
+            ctx.fillStyle=grid[i][j]?"black":"lightgray";
+            ctx.fillRect(j*cell,i*cell,cell-1,cell-1);
+        }
+    }
+
+    if(src){
+        ctx.fillStyle="green";
+        ctx.fillRect(src[1]*cell,src[0]*cell,cell-1,cell-1);
+    }
+    if(dest){
+        ctx.fillStyle="red";
+        ctx.fillRect(dest[1]*cell,dest[0]*cell,cell-1,cell-1);
+    }
+}
+
+function run(){
+    let dist=Array.from({length:n},()=>Array(n).fill(1e9));
+    let parent=Array.from({length:n},()=>Array(n).fill(null));
+
+    let pq=[[0,src]];
+    dist[src[0]][src[1]]=0;
+
+    while(pq.length){
+        pq.sort((a,b)=>a[0]-b[0]);
+        let [d,[x,y]]=pq.shift();
+
+        let dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+        for(let [dx,dy] of dirs){
+            let nx=x+dx, ny=y+dy;
+            if(nx>=0 && ny>=0 && nx<n && ny<n && !grid[nx][ny]){
+                if(dist[nx][ny]>d+1){
+                    dist[nx][ny]=d+1;
+                    parent[nx][ny]=[x,y];
+                    pq.push([dist[nx][ny],[nx,ny]]);
+                }
+            }
+        }
+    }
+
+    path=[];
+    let cur=dest;
+    while(cur){
+        path.push(cur);
+        cur=parent[cur[0]][cur[1]];
+    }
+    path.reverse();
+
+    animate();
+}
+
+function animate(){
+    let i=0;
+    let interval=setInterval(()=>{
+        if(i>=path.length){
+            clearInterval(interval);
+            return;
+        }
+        let [x,y]=path[i];
+        ctx.fillStyle="blue";
+        ctx.fillRect(y*cell,x*cell,cell-1,cell-1);
+        i++;
+    },50);
+}
+
+draw();
+</script>
+
+</body>
+</html>
